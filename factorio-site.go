@@ -12,6 +12,7 @@ import (
 
 type serverData struct {
 	IPAddr  string
+	Port    int
 	Title   string
 	Players string
 }
@@ -61,6 +62,7 @@ func main() {
 
 		data := serverData{
 			*serverAddr,
+			34197,
 			"Server with Bob's Mod, est. Feb 2020",
 			playersOnline,
 		}
