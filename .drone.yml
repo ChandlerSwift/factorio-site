@@ -20,7 +20,7 @@ steps:
      - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa
      - ssh-keyscan -t rsa factorio.blackolivepineapple.pizza >> ~/.ssh/known_hosts
      - ssh service@factorio.blackolivepineapple.pizza sudo service factorio-site stop || true
-     - rsync --rsync-path="sudo rsync" --archive --verbose --compress . /opt/factorio-site/
+     - rsync --rsync-path="sudo rsync" --archive --verbose --compress . service@factorio.blackolivepineapple.pizza:/opt/factorio-site/
      - ssh service@factorio.blackolivepineapple.pizza sudo mv /opt/factorio-site/factorio-site.service /etc/systemd/system/
      - ssh service@factorio.blackolivepineapple.pizza sudo service factorio-site start
     when:
