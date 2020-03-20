@@ -22,6 +22,7 @@ steps:
      - ssh service@factorio.blackolivepineapple.pizza sudo service factorio-site stop || true
      - rsync --rsync-path="sudo rsync" --archive --verbose --compress . service@factorio.blackolivepineapple.pizza:/opt/factorio-site/
      - ssh service@factorio.blackolivepineapple.pizza sudo mv /opt/factorio-site/factorio-site.service /etc/systemd/system/
+     - ssh service@factorio.blackolivepineapple.pizza sudo systemctl daemon-reload
      - ssh service@factorio.blackolivepineapple.pizza sudo service factorio-site start
     when:
       branch: master
