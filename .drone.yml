@@ -16,7 +16,9 @@ steps:
     commands:
      - go build
      - apt-get update; apt-get install -y rsync
-     - mkdir ~/.ssh; echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa
+     - mkdir ~/.ssh
+     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa
+     - ssh-keyscan -t rsa >> ~/.ssh/known_hosts
      - ssh service@factorio.blackolivepineapple.pizza sudo service factorio-site stop
      - rsync --rsync-path="sudo rsync" --archive --verbose --compress . /opt/factorio-site/
      - ssh service@factorio.blackolivepineapple.pizza sudo service factorio-site stop
