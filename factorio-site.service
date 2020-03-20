@@ -2,7 +2,7 @@
 Description=factorio-site
 
 [Service]
-ExecStart=/bin/sh -c "/opt/factorio-site/serverm --password=`cat /opt/factorio-rcon-password`"
+ExecStart=/bin/sh -c "/opt/factorio-site/factorio-site --password=`cat /opt/factorio-rcon-password`"
 WorkingDirectory=/opt/factorio-site
 Restart=always
 
