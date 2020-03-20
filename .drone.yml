@@ -1,0 +1,22 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: validate
+    image: golang
+    commands:
+      - go build
+      - go test
+  - name: deploy
+    image: golang
+    environment:
+      SSH_PRIVATE_KEY:
+        from_secret: SSH_PRIVATE_KEY
+    commands:
+     - apt update; apt install -y rsync
+     - ssh service@factorio.blackolivepineapple.pizza sudo service factorio-site stop
+     - rsync --rsync-path="sudo rsync" --archive --verbose --compress . /opt/factorio-site/
+     - ssh service@factorio.blackolivepineapple.pizza sudo service factorio-site stop
+    when:
+      branch: master
