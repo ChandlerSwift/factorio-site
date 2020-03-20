@@ -4,7 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
+
+	"github.com/james4k/rcon"
 )
 
 type serverData struct {
@@ -15,13 +18,19 @@ type serverData struct {
 
 func main() {
 
-	port := flag.Int("port", 65536, "Port on which the HTTP server should serve")
-	server := flag.String("serverAddr", "factorio.blackolivepineapple.pizza", "Server to check status of")
+	port := flag.Int("port", 65536, "Port on which the HTTP server should serve (required)")
+	serverAddr := flag.String("serverAddr", "factorio.blackolivepineapple.pizza", "Server to check status of (optional, defaults to factorio.bopp")
+	serverPort := flag.Int("serverport", 34196, "RCON port on the Factorio server")
+	password := flag.String("password", "", "RCON password of the server (required)")
 	flag.Parse()
 
 	if *port < 1 || *port > 65535 {
 		fmt.Printf("Invalid port %v\n", *port)
 		return
+	}
+
+	if *password == "" {
+		fmt.Printf("Password flag is required")
 	}
 
 	fmt.Print("Parsing templates...\n")
@@ -30,13 +39,32 @@ func main() {
 		fmt.Printf("Error parsing HTML template: %v\n", err)
 	}
 
-	data := serverData{
-		*server,
-		"bopp server",
-		"none",
+	rconConnection, err := rcon.Dial(fmt.Sprintf("%v:%v", *serverAddr, *serverPort), *password)
+	if err != nil {
+		log.Fatalf("Error making RCON connection: %v", err)
 	}
+	defer rconConnection.Close()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
+		_, err := rconConnection.Write("/players o")
+		if err != nil {
+			fmt.Print(w, "Error connecting to server")
+			return
+		}
+
+		playersOnline, _, err := rconConnection.Read()
+		if err != nil {
+			fmt.Print(w, "Error receiving data from server")
+			return
+		}
+
+		data := serverData{
+			*serverAddr,
+			"Server with Bob's Mod, est. Feb 2020",
+			playersOnline,
+		}
+
 		t.Execute(w, data)
 	})
 
