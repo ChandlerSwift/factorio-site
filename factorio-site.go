@@ -18,7 +18,7 @@ type serverData struct {
 
 func main() {
 
-	port := flag.Int("port", 65536, "Port on which the HTTP server should serve (required)")
+	port := flag.Int("port", 80, "Port on which the HTTP server should serve (required)")
 	serverAddr := flag.String("serverAddr", "factorio.blackolivepineapple.pizza", "Server to check status of (optional, defaults to factorio.bopp")
 	serverPort := flag.Int("serverport", 34196, "RCON port on the Factorio server")
 	password := flag.String("password", "", "RCON password of the server (required)")
