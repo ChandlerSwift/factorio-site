@@ -12,9 +12,11 @@ steps:
     image: golang
     environment:
       SSH_PRIVATE_KEY:
-        from_secret: SSH_PRIVATE_KEY
+        from_secret: ssh_private_key
     commands:
+     - go build
      - apt update; apt install -y rsync
+     - cat $SSH_PRIVATE_KEY > ~/.ssh/id_rsa; chmod 600 ~/.ssh/id_rsa
      - ssh service@factorio.blackolivepineapple.pizza sudo service factorio-site stop
      - rsync --rsync-path="sudo rsync" --archive --verbose --compress . /opt/factorio-site/
      - ssh service@factorio.blackolivepineapple.pizza sudo service factorio-site stop
