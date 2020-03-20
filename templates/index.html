@@ -12,7 +12,7 @@
     <body>
         <h1>blackolivepineapple.pizza Factorio Server</h1>
         <ul>
-            <li><b>Connection String:</b> {{.IPAddr}}{{if .Port != 34197}}:{{.Port}}{{end}}</li>
+            <li><b>Connection String:</b> {{.IPAddr}}{{if ne .Port 34197}}:{{.Port}}{{end}}</li>
             <li><b>Server Name:</b> {{.Title}}</li>
             <li><b>Current players:</b><br>{{.Players}}</li>
         </ul>
