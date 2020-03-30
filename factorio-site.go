@@ -61,12 +61,13 @@ func main() {
 			return
 		}
 
-		data := serverData{
+		data := []serverData{}
+		data = append(data, serverData{
 			*serverAddr,
 			34197,
 			"Server with Bob's Mod, est. Feb 2020",
 			playersOnline,
-		}
+		})
 
 		t.Execute(w, data)
 	})
