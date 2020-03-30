@@ -72,37 +72,37 @@ func main() {
 		fmt.Printf("Error parsing HTML template: %v\n", err)
 	}
 
-	for _, server := range config.Servers {
-		server.rconConnection, err = rcon.Dial(fmt.Sprintf("%v:%v", server.Host, server.RCONPort), server.RCONPassword)
+	for _, s := range config.Servers {
+		s.rconConnection, err = rcon.Dial(fmt.Sprintf("%v:%v", s.Host, s.RCONPort), s.RCONPassword)
 		if err != nil {
-			log.Fatalf("Error making RCON connection to %v: %v", server.Title, err)
+			log.Fatalf("Error making RCON connection to %v: %v", s.Title, err)
 		}
-		defer server.rconConnection.Close()
+		defer s.rconConnection.Close()
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
 		data := []serverData{}
 
-		for _, server := range config.Servers {
+		for _, s := range config.Servers {
 
-			playersOnline, err := server.rconCommand("/players o")
+			playersOnline, err := s.rconCommand("/players o")
 			if err != nil {
 				log.Printf("Error executing players online command: %v\n", err)
 			}
 
-			version, err := server.rconCommand("/version")
+			version, err := s.rconCommand("/version")
 			if err != nil {
 				log.Printf("Error executing version command: %v\n", err)
 			}
 
 			data = append(data, serverData{
-				server.Host,
-				server.Port,
-				server.Title,
+				s.Host,
+				s.Port,
+				s.Title,
 				playersOnline,
 				version,
-				server.Description,
+				s.Description,
 			})
 
 		}
@@ -116,7 +116,7 @@ func main() {
 		Cache:      autocert.DirCache("certs"),
 	}
 
-	server := &http.Server{
+	srv := &http.Server{
 		Addr: ":https",
 		TLSConfig: &tls.Config{
 			GetCertificate: certManager.GetCertificate,
@@ -126,6 +126,6 @@ func main() {
 	go http.ListenAndServe(":http", certManager.HTTPHandler(nil)) // Handler for LetsEncrypt
 
 	fmt.Println("Serving...")
-	server.ListenAndServeTLS("", "") // Key/cert come from server.TLSConfig
+	srv.ListenAndServeTLS("", "") // Key/cert come from srv.TLSConfig
 
 }
