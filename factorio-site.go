@@ -72,8 +72,8 @@ func main() {
 		fmt.Printf("Error parsing HTML template: %v\n", err)
 	}
 
-	for _, s := range config.Servers {
-		s.rconConnection, err = rcon.Dial(fmt.Sprintf("%v:%v", s.Host, s.RCONPort), s.RCONPassword)
+	for i := range config.Servers {
+		config.Servers[i].rconConnection, err = rcon.Dial(fmt.Sprintf("%v:%v", s.Host, s.RCONPort), s.RCONPassword)
 		if err != nil {
 			log.Fatalf("Error making RCON connection to %v: %v", s.Title, err)
 		}
