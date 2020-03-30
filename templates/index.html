@@ -14,9 +14,9 @@
         {{range .}}
             <h3>{{.Title}}</h3>
             <ul>
+                <li><b>Description:</b> {{.Description}}</li>
                 <li><b>Connection String:</b> {{.IPAddr}}{{if ne .Port 34197}}:{{.Port}}{{end}}</li>
                 <li><b>Version:</b> {{.Version}}</li>
-                <li><b>Server Name:</b> {{.Title}}</li>
                 <li><b>Current players:</b><br>{{.Players}}</li>
             </ul>
         {{end}}
