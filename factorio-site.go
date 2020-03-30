@@ -14,6 +14,7 @@ import (
 )
 
 type config struct {
+	UseTLS  bool     `json:"useTLS"`
 	Servers []server `json:"servers"`
 }
 
@@ -111,22 +112,29 @@ func main() {
 		t.Execute(w, data)
 	})
 
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("factorio.blackolivepineapple.pizza"), // TODO: add config
-		Cache:      autocert.DirCache("certs"),
+	if config.UseTLS {
+
+		certManager := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist("factorio.blackolivepineapple.pizza"), // TODO: add config
+			Cache:      autocert.DirCache("certs"),
+		}
+
+		srv := &http.Server{
+			Addr: ":https",
+			TLSConfig: &tls.Config{
+				GetCertificate: certManager.GetCertificate,
+			},
+		}
+
+		go http.ListenAndServe(":http", certManager.HTTPHandler(nil)) // Handler for LetsEncrypt
+
+		fmt.Println("Serving...")
+		srv.ListenAndServeTLS("", "") // Key/cert come from srv.TLSConfig
+
+	} else { // Debug
+		fmt.Println("Serving...")
+		http.ListenAndServe(":8080", nil) // TODO: pass as config value
 	}
-
-	srv := &http.Server{
-		Addr: ":https",
-		TLSConfig: &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		},
-	}
-
-	go http.ListenAndServe(":http", certManager.HTTPHandler(nil)) // Handler for LetsEncrypt
-
-	fmt.Println("Serving...")
-	srv.ListenAndServeTLS("", "") // Key/cert come from srv.TLSConfig
 
 }
