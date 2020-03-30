@@ -17,6 +17,7 @@ type serverData struct {
 	Port    int
 	Title   string
 	Players string
+	Version string
 }
 
 func main() {
@@ -61,12 +62,25 @@ func main() {
 			return
 		}
 
+		_, err = rconConnection.Write("/version")
+		if err != nil {
+			fmt.Print(w, "Error connecting to server")
+			return
+		}
+
+		version, _, err := rconConnection.Read()
+		if err != nil {
+			fmt.Print(w, "Error receiving data from server")
+			return
+		}
+
 		data := []serverData{}
 		data = append(data, serverData{
 			*serverAddr,
 			34197,
 			"Server with Bob's Mod, est. Feb 2020",
 			playersOnline,
+			version,
 		})
 
 		t.Execute(w, data)
