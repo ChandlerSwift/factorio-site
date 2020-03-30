@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"html/template"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/james4k/rcon"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 type serverData struct {
@@ -69,7 +71,22 @@ func main() {
 		t.Execute(w, data)
 	})
 
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("factorio.blackolivepineapple.pizza"), // TODO: add config
+		Cache:      autocert.DirCache("certs"),
+	}
+
+	server := &http.Server{
+		Addr: ":https",
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		},
+	}
+
+	go http.ListenAndServe(":http", certManager.HTTPHandler(nil)) // Handler for LetsEncrypt
+
 	fmt.Println("Serving...")
-	http.ListenAndServe(":http", nil)
+	server.ListenAndServeTLS("", "") // Key/cert come from server.TLSConfig
 
 }
