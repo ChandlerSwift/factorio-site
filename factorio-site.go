@@ -2,9 +2,10 @@ package main
 
 import (
 	"crypto/tls"
-	"flag"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -12,28 +13,57 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+type config struct {
+	Servers []server `json:"servers"`
+}
+
+type server struct {
+	Host           string `json:"host"`
+	Port           int    `json:"port"`
+	RCONPort       int    `json:"rconport"`
+	RCONPassword   string `json:"rconpassword"`
+	Title          string `json:"title"`
+	Description    string `json:"description"`
+	rconConnection *rcon.RemoteConsole
+}
+
 type serverData struct {
-	IPAddr  string
-	Port    int
-	Title   string
-	Players string
-	Version string
+	IPAddr      string
+	Port        int
+	Title       string
+	Players     string
+	Version     string
+	Description string
+}
+
+// rconCommand executes a command on the server, and returns the server's
+// response as a string.
+func (s server) rconCommand(command string) (response string, err error) {
+	_, err = s.rconConnection.Write(command)
+	if err != nil {
+		return "", err
+	}
+
+	response, _, err = s.rconConnection.Read()
+	if err != nil {
+		return "", err
+	}
+	return
 }
 
 func main() {
 
-	serverAddr := flag.String("serverAddr", "localhost", "Server to check status of (optional; defaults to localhost")
-	serverPort := flag.Int("serverPort", 34196, "RCON port on the Factorio server (optional; defaults to 34196)")
-	password := flag.String("password", "", "RCON password of the server (required)")
-	flag.Parse()
-
-	if *serverPort < 1 || *serverPort > 65535 {
-		fmt.Printf("Invalid server port %v\n", *serverPort)
-		return
+	// Parse config file
+	configData, err := ioutil.ReadFile("./config.json")
+	if err != nil {
+		log.Fatalf("Error reading config file: %v\n", err)
 	}
 
-	if *password == "" {
-		fmt.Printf("Password flag is required")
+	var config config
+
+	err = json.Unmarshal(configData, &config)
+	if err != nil {
+		log.Fatalf("Error parsing config file: %v\n", err)
 	}
 
 	fmt.Print("Parsing templates...\n")
@@ -42,46 +72,40 @@ func main() {
 		fmt.Printf("Error parsing HTML template: %v\n", err)
 	}
 
-	rconConnection, err := rcon.Dial(fmt.Sprintf("%v:%v", *serverAddr, *serverPort), *password)
-	if err != nil {
-		log.Fatalf("Error making RCON connection: %v", err)
+	for _, server := range config.Servers {
+		server.rconConnection, err = rcon.Dial(fmt.Sprintf("%v:%v", server.Host, server.RCONPort), server.RCONPassword)
+		if err != nil {
+			log.Fatalf("Error making RCON connection to %v: %v", server.Title, err)
+		}
+		defer server.rconConnection.Close()
 	}
-	defer rconConnection.Close()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
-		_, err := rconConnection.Write("/players o")
-		if err != nil {
-			fmt.Print(w, "Error connecting to server")
-			return
-		}
-
-		playersOnline, _, err := rconConnection.Read()
-		if err != nil {
-			fmt.Print(w, "Error receiving data from server")
-			return
-		}
-
-		_, err = rconConnection.Write("/version")
-		if err != nil {
-			fmt.Print(w, "Error connecting to server")
-			return
-		}
-
-		version, _, err := rconConnection.Read()
-		if err != nil {
-			fmt.Print(w, "Error receiving data from server")
-			return
-		}
-
 		data := []serverData{}
-		data = append(data, serverData{
-			*serverAddr,
-			34197,
-			"Server with Bob's Mod, est. Feb 2020",
-			playersOnline,
-			version,
-		})
+
+		for _, server := range config.Servers {
+
+			playersOnline, err := server.rconCommand("/players o")
+			if err != nil {
+				log.Printf("Error executing players online command: %v\n", err)
+			}
+
+			version, err := server.rconCommand("/version")
+			if err != nil {
+				log.Printf("Error executing version command: %v\n", err)
+			}
+
+			data = append(data, serverData{
+				server.Host,
+				server.Port,
+				server.Title,
+				playersOnline,
+				version,
+				server.Description,
+			})
+
+		}
 
 		t.Execute(w, data)
 	})
