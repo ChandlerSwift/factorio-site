@@ -73,6 +73,7 @@ func main() {
 	}
 
 	for i := range config.Servers {
+		s := config.Servers[i]
 		config.Servers[i].rconConnection, err = rcon.Dial(fmt.Sprintf("%v:%v", s.Host, s.RCONPort), s.RCONPassword)
 		if err != nil {
 			log.Fatalf("Error making RCON connection to %v: %v", s.Title, err)
