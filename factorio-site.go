@@ -19,13 +19,13 @@ type serverData struct {
 
 func main() {
 
-	serverAddr := flag.String("serverAddr", "factorio.blackolivepineapple.pizza", "Server to check status of (optional, defaults to factorio.bopp")
-	serverPort := flag.Int("serverport", 34196, "RCON port on the Factorio server")
+	serverAddr := flag.String("serverAddr", "localhost", "Server to check status of (optional; defaults to localhost")
+	serverPort := flag.Int("serverPort", 34196, "RCON port on the Factorio server (optional; defaults to 34196)")
 	password := flag.String("password", "", "RCON password of the server (required)")
 	flag.Parse()
 
-	if *port < 1 || *port > 65535 {
-		fmt.Printf("Invalid port %v\n", *port)
+	if *serverPort < 1 || *serverPort > 65535 {
+		fmt.Printf("Invalid server port %v\n", *serverPort)
 		return
 	}
 
@@ -69,7 +69,7 @@ func main() {
 		t.Execute(w, data)
 	})
 
-	fmt.Printf("Serving on :%v...\n", *port)
-	http.ListenAndServe(fmt.Sprintf(":%v", *port), nil)
+	fmt.Println("Serving...")
+	http.ListenAndServe(":http", nil)
 
 }
