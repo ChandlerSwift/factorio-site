@@ -14,8 +14,10 @@ import (
 )
 
 type config struct {
-	UseTLS  bool     `json:"useTLS"`
-	Servers []server `json:"servers"`
+	UseTLS          bool     `json:"useTLS"`
+	Servers         []server `json:"servers"`
+	TLSHostname     string   `json:"tlshostname"`
+	DebugServerPort int      `json:"debugserverport"`
 }
 
 type server struct {
@@ -116,7 +118,7 @@ func main() {
 
 		certManager := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist("factorio.blackolivepineapple.pizza"), // TODO: add config
+			HostPolicy: autocert.HostWhitelist(config.TLSHostname),
 			Cache:      autocert.DirCache("certs"),
 		}
 
@@ -134,7 +136,10 @@ func main() {
 
 	} else { // Debug
 		fmt.Println("Serving...")
-		http.ListenAndServe(":8080", nil) // TODO: pass as config value
+		if config.DebugServerPort == 0 { // Value not set in JSON
+			config.DebugServerPort = 8080
+		}
+		http.ListenAndServe(fmt.Sprintf(":%v", config.DebugServerPort), nil) // TODO: pass as config value
 	}
 
 }
