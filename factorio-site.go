@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/james4k/rcon"
 	"golang.org/x/crypto/acme/autocert"
@@ -18,6 +19,7 @@ type config struct {
 	Servers         []server `json:"servers"`
 	TLSHostname     string   `json:"tlshostname"`
 	DebugServerPort int      `json:"debugserverport"`
+	BackupDir       string   `json:"backupDir"`
 }
 
 type server struct {
@@ -69,12 +71,20 @@ func main() {
 		log.Fatalf("Error parsing config file: %v\n", err)
 	}
 
+	serveBackups := true
+	if stat, err := os.Stat(config.BackupDir); os.IsNotExist(err) || !stat.IsDir() {
+		log.Printf("Backup directory %v does not exist; not serving backups.", config.BackupDir)
+		serveBackups = false
+	}
+
+	// Set up templates
 	fmt.Print("Parsing templates...\n")
 	t, err := template.ParseFiles("templates/index.html")
 	if err != nil {
 		fmt.Printf("Error parsing HTML template: %v\n", err)
 	}
 
+	// Connect to RCON servers
 	for i := range config.Servers {
 		s := config.Servers[i]
 		config.Servers[i].rconConnection, err = rcon.Dial(fmt.Sprintf("%v:%v", s.Host, s.RCONPort), s.RCONPassword)
@@ -113,6 +123,11 @@ func main() {
 
 		t.Execute(w, data)
 	})
+
+	// Serve backup directory
+	if serveBackups {
+		http.Handle("/backups/", http.StripPrefix("/backups/", http.FileServer(http.Dir(config.BackupDir))))
+	}
 
 	if config.UseTLS {
 
