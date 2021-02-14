@@ -7,6 +7,22 @@
                 font-family: sans-serif;
                 padding: 10px;
             }
+            /* https://html.spec.whatwg.org/multipage/rendering.html#phrasing-content-3 */
+            .light {
+                color: #888;
+            }
+            .light a {
+                color: #88f;
+            }
+            .light a:hover {
+                color: #00e;
+            }
+            .light a:visited {
+                color: #a9b;
+            }
+            .light a:visited:hover {
+                color: #518;
+            }
         </style>
     </head>
     <body>
@@ -22,5 +38,6 @@
                 <li><b>Current players:</b><br>{{.Players}}</li>
             </ul>
         {{end}}
+        <p class="light">This page maintained by chandlerswift's <a href="https://github.com/chandlerswift/factorio-site">factorio server list</a>.</p>
     </body>
 </html>
