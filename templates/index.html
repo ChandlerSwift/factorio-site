@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>blackolivepineapple.pizza Factorio Server</title>
+        <title>{{.Title}}</title>
         <style>
             html {
                 font-family: sans-serif;
@@ -10,14 +10,14 @@
         </style>
     </head>
     <body>
-        <h1>blackolivepineapple.pizza Factorio</h1>
-        <p>Hosted by the <a href="https://blackolivepineapple.pizza/">Black Olive-Pineapple Pizza Consortium</a>, in collaboration with UMD's ACM Club</p>
+        <h1>{{.Title}}</h1>
+        <p>{{.Content}}</p>
         <p>Backups are taken and archived periodically, and made available in the <a href="/backups">backup archive</a>.</p>
-        {{range .}}
+        {{range .Servers}}
             <h3>{{.Title}}</h3>
             <ul>
                 <li><b>Description:</b> {{.Description}}</li>
-                <li><b>Connection String:</b> {{.IPAddr}}{{if ne .Port 34197}}:{{.Port}}{{end}}</li>
+                <li><b>Connection String:</b> {{.Host}}{{if ne .Port 34197}}:{{.Port}}{{end}}</li>
                 <li><b>Version:</b> {{.Version}}</li>
                 <li><b>Current players:</b><br>{{.Players}}</li>
             </ul>

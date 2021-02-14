@@ -15,30 +15,32 @@ import (
 )
 
 type config struct {
-	UseTLS          bool     `json:"useTLS"`
-	Servers         []server `json:"servers"`
-	TLSHostname     string   `json:"tlshostname"`
-	DebugServerPort int      `json:"debugserverport"`
-	BackupDir       string   `json:"backupDir"`
+	Title       string   `json:"title"`
+	Content     string   `json:"content"`
+	Servers     []server `json:"servers"`
+	UseTLS      bool     `json:"useTLS"`
+	TLSHostname string   `json:"tlshostname"`
+	ServerPort  int      `json:"serverport"`
+	BackupDir   string   `json:"backupDir"`
 }
 
 type server struct {
-	Host           string `json:"host"`
+	Host           string `json:"host"` // for display only
 	Port           int    `json:"port"`
+	RCONHost       string `json:"rconhost"` // not displayed, but used to connect
 	RCONPort       int    `json:"rconport"`
 	RCONPassword   string `json:"rconpassword"`
-	Title          string `json:"title"`
-	Description    string `json:"description"`
+	Title          string `json:"title"`       // TODO: get this from RCON?
+	Description    string `json:"description"` // TODO: get this from RCON?
+	Version        string // Populated by RCON
+	Players        string // Populated by RCON
 	rconConnection *rcon.RemoteConsole
 }
 
-type serverData struct {
-	IPAddr      string
-	Port        int
-	Title       string
-	Players     string
-	Version     string
-	Description string
+type pageData struct {
+	Title   string
+	Content string
+	Servers []server
 }
 
 // rconCommand executes a command on the server, and returns the server's
@@ -77,55 +79,53 @@ func main() {
 		serveBackups = false
 	}
 
+	data := pageData{}
+	data.Title = config.Title
+	data.Content = config.Content
+	data.Servers = config.Servers
+
 	// Set up templates
 	fmt.Print("Parsing templates...\n")
 	t, err := template.ParseFiles("templates/index.html")
 	if err != nil {
-		fmt.Printf("Error parsing HTML template: %v\n", err)
+		log.Fatalf("Error parsing HTML template: %v\n", err)
 	}
 
 	// Connect to RCON servers
 	for i := range config.Servers {
 		s := config.Servers[i]
-		config.Servers[i].rconConnection, err = rcon.Dial(fmt.Sprintf("%v:%v", s.Host, s.RCONPort), s.RCONPassword)
+		config.Servers[i].rconConnection, err = rcon.Dial(fmt.Sprintf("%v:%v", s.RCONHost, s.RCONPort), s.RCONPassword)
 		if err != nil {
 			log.Fatalf("Error making RCON connection to %v: %v", s.Title, err)
 		}
-		defer s.rconConnection.Close()
+		defer config.Servers[i].rconConnection.Close()
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
-		data := []serverData{}
+		// Update servers with current data
+		for i, s := range config.Servers {
 
-		for _, s := range config.Servers {
-
-			playersOnline, err := s.rconCommand("/players o")
+			config.Servers[i].Players, err = s.rconCommand("/players o")
 			if err != nil {
 				log.Printf("Error executing players online command: %v\n", err)
 			}
 
-			version, err := s.rconCommand("/version")
+			config.Servers[i].Version, err = s.rconCommand("/version")
 			if err != nil {
 				log.Printf("Error executing version command: %v\n", err)
 			}
 
-			data = append(data, serverData{
-				s.Host,
-				s.Port,
-				s.Title,
-				playersOnline,
-				version,
-				s.Description,
-			})
-
 		}
 
-		t.Execute(w, data)
+		err = t.Execute(w, data)
+		if err != nil {
+			log.Printf("Error executing template: %v\n", err)
+		}
 	})
 
 	// Serve backup directory
-	if serveBackups {
+	if serveBackups { // TODO: also remove HTML if disabled
 		http.Handle("/backups/", http.StripPrefix("/backups/", http.FileServer(http.Dir(config.BackupDir))))
 	}
 
@@ -146,15 +146,18 @@ func main() {
 
 		go http.ListenAndServe(":http", certManager.HTTPHandler(nil)) // Handler for LetsEncrypt
 
-		fmt.Println("Serving...")
+		if config.ServerPort == 0 { // Value not set in JSON
+			config.ServerPort = 443
+		}
+		fmt.Printf("Serving HTTPS on port %v...\n", config.ServerPort)
 		srv.ListenAndServeTLS("", "") // Key/cert come from srv.TLSConfig
 
-	} else { // Debug
-		fmt.Println("Serving...")
-		if config.DebugServerPort == 0 { // Value not set in JSON
-			config.DebugServerPort = 8080
+	} else {
+		if config.ServerPort == 0 { // Value not set in JSON
+			config.ServerPort = 80
 		}
-		http.ListenAndServe(fmt.Sprintf(":%v", config.DebugServerPort), nil) // TODO: pass as config value
+		fmt.Printf("Serving HTTP on port %v...\n", config.ServerPort)
+		http.ListenAndServe(fmt.Sprintf(":%v", config.ServerPort), nil)
 	}
 
 }
