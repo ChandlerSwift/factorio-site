@@ -23,6 +23,10 @@
             .light a:visited:hover {
                 color: #518;
             }
+            :not(:hover) .optional-port {
+                color: #ccc;
+            }
+
         </style>
     </head>
     <body>
@@ -33,7 +37,7 @@
             <h3>{{.Title}}</h3>
             <ul>
                 <li><b>Description:</b> {{.Description}}</li>
-                <li><b>Connection String:</b> {{.Host}}{{if ne .Port 34197}}:{{.Port}}{{end}}</li>
+                <li><b>Connection String:</b> {{.Host}}{{if eq .Port 34197}}<span class="optional-port">:{{.Port}}</span>{{else}}:{{.Port}}{{end}}</li>
                 {{if ne .RCONHost ""}}
                 <li><b>Version:</b> {{.Version}}</li>
                 <li><b>Current players:</b><br>{{.Players}}</li>
