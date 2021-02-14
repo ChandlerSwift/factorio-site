@@ -27,7 +27,7 @@ type config struct {
 type server struct {
 	Host           string `json:"host"` // for display only
 	Port           int    `json:"port"`
-	RCONHost       string `json:"rconhost"` // not displayed, but used to connect
+	RCONHost       string `json:"rconhost"` // not displayed, but used to connect; leave blank for no RCON connection
 	RCONPort       int    `json:"rconport"`
 	RCONPassword   string `json:"rconpassword"`
 	Title          string `json:"title"`       // TODO: get this from RCON?
@@ -94,28 +94,30 @@ func main() {
 	// Connect to RCON servers
 	for i := range config.Servers {
 		s := config.Servers[i]
-		config.Servers[i].rconConnection, err = rcon.Dial(fmt.Sprintf("%v:%v", s.RCONHost, s.RCONPort), s.RCONPassword)
-		if err != nil {
-			log.Fatalf("Error making RCON connection to %v: %v", s.Title, err)
+		if s.RCONHost != "" {
+			config.Servers[i].rconConnection, err = rcon.Dial(fmt.Sprintf("%v:%v", s.RCONHost, s.RCONPort), s.RCONPassword)
+			if err != nil {
+				log.Fatalf("Error making RCON connection to %v: %v", s.Title, err)
+			}
+			defer config.Servers[i].rconConnection.Close()
 		}
-		defer config.Servers[i].rconConnection.Close()
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
 		// Update servers with current data
 		for i, s := range config.Servers {
+			if s.rconConnection != nil {
+				config.Servers[i].Players, err = s.rconCommand("/players o")
+				if err != nil {
+					log.Printf("Error executing players online command: %v\n", err)
+				}
 
-			config.Servers[i].Players, err = s.rconCommand("/players o")
-			if err != nil {
-				log.Printf("Error executing players online command: %v\n", err)
+				config.Servers[i].Version, err = s.rconCommand("/version")
+				if err != nil {
+					log.Printf("Error executing version command: %v\n", err)
+				}
 			}
-
-			config.Servers[i].Version, err = s.rconCommand("/version")
-			if err != nil {
-				log.Printf("Error executing version command: %v\n", err)
-			}
-
 		}
 
 		err = t.Execute(w, data)

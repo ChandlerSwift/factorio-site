@@ -34,8 +34,10 @@
             <ul>
                 <li><b>Description:</b> {{.Description}}</li>
                 <li><b>Connection String:</b> {{.Host}}{{if ne .Port 34197}}:{{.Port}}{{end}}</li>
+                {{if ne .RCONHost ""}}
                 <li><b>Version:</b> {{.Version}}</li>
                 <li><b>Current players:</b><br>{{.Players}}</li>
+                {{end}}
             </ul>
         {{end}}
         <p class="light">This page maintained by chandlerswift's <a href="https://github.com/chandlerswift/factorio-site">factorio server list</a>.</p>
