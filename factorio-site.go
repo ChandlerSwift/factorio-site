@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -61,7 +60,7 @@ func (s server) rconCommand(command string) (response string, err error) {
 func main() {
 
 	// Parse config file
-	configData, err := ioutil.ReadFile("./config.json")
+	configData, err := os.ReadFile("./config.json")
 	if err != nil {
 		log.Fatalf("Error reading config file: %v\n", err)
 	}
