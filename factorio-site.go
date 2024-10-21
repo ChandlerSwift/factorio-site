@@ -41,9 +41,10 @@ type server struct {
 }
 
 type pageData struct {
-	Title   string
-	Content string
-	Servers []server
+	Title        string
+	Content      template.HTML
+	Servers      []server
+	ServeBackups bool
 }
 
 // rconCommand executes a command on the server, and returns the server's
@@ -82,10 +83,12 @@ func main() {
 		serveBackups = false
 	}
 
-	data := pageData{}
-	data.Title = config.Title
-	data.Content = config.Content
-	data.Servers = config.Servers
+	data := pageData{
+		Title:        config.Title,
+		Content:      template.HTML(config.Content),
+		Servers:      config.Servers,
+		ServeBackups: serveBackups,
+	}
 
 	// Set up templates
 	fmt.Print("Parsing templates...\n")
@@ -130,7 +133,7 @@ func main() {
 	})
 
 	// Serve backup directory
-	if serveBackups { // TODO: also remove HTML if disabled
+	if serveBackups {
 		http.Handle("/backups/", http.StripPrefix("/backups/", http.FileServer(http.Dir(config.BackupDir))))
 	}
 

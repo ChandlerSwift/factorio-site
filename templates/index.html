@@ -32,7 +32,9 @@
     <body>
         <h1>{{.Title}}</h1>
         <p>{{.Content}}</p>
+        {{if .ServeBackups}}
         <p>Backups are taken and archived periodically, and made available in the <a href="/backups">backup archive</a>.</p>
+        {{end}}
         {{range .Servers}}
             <h3>{{.Title}}</h3>
             <ul>
