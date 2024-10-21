@@ -2,8 +2,8 @@
 Description=factorio-site
 
 [Service]
-ExecStart=/bin/sh -c "/opt/factorio-site/factorio-site --password=`cat /opt/factorio-rcon-password`"
-WorkingDirectory=/opt/factorio-site
+ExecStart=/home/factorio/factorio-site
+WorkingDirectory=/home/factorio
 Restart=always
 
 [Install]
