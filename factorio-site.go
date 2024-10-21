@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -12,6 +13,9 @@ import (
 	"github.com/james4k/rcon"
 	"golang.org/x/crypto/acme/autocert"
 )
+
+//go:embed templates/index.html
+var indexhtml string
 
 type config struct {
 	Title       string   `json:"title"`
@@ -85,7 +89,7 @@ func main() {
 
 	// Set up templates
 	fmt.Print("Parsing templates...\n")
-	t, err := template.ParseFiles("templates/index.html")
+	t, err := template.New("index").Parse(indexhtml)
 	if err != nil {
 		log.Fatalf("Error parsing HTML template: %v\n", err)
 	}
